@@ -18,8 +18,14 @@ class User extends Authenticatable {
      */
     protected $fillable = [
         'name',
+        'mobile',
+        'otp',
         'email',
         'password',
+    ];
+
+    protected $attributes = [
+        'otp' => '0  ',
     ];
 
     /**
