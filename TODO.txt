@@ -1,0 +1,484 @@
+01. Creating Migration Files
+        - Users Table -> Already exists, just customize
+
+        php artisan make:migration create_categories_table
+        php artisan make:migration create_customers_table
+        php artisan make:migration create_products_table
+        php artisan make:migration create_invoices_table
+        php artisan make:migration create_invoice_products_table
+
+02. Creating Model Files
+        - User Model is already generated, just modify
+
+        php artisan make:model Customer
+        php artisan make:model Category
+        php artisan make:model Invoice
+        php artisan make:model InvoiceProduct
+        php artisan make:model Product
+
+03. Creating Controller Files
+        php artisan make:controller CategoryController
+        php artisan make:controller CustomerController
+        php artisan make:controller DashboardController
+        php artisan make:controller HomeController
+        php artisan make:controller InvoiceController
+        php artisan make:controller ProductController
+        php artisan make:controller UserController
+
+04. Customizing the migration and model files with relationship establishment
+
+        - users Table:
+        Schema::create( 'users', function ( Blueprint $table ) {
+            $table->id();
+            $table->string( 'name' );
+            $table->string( 'mobile' );
+            $table->string( 'otp' );
+            $table->string( 'email' )->unique();
+
+            $table->timestamp( 'email_verified_at' )->nullable();
+
+            $table->string( 'password' );
+            $table->rememberToken();
+
+            $table->timestamps();
+        } );
+
+
+        - categories Table:
+        Schema::create( 'categories', function ( Blueprint $table ) {
+            $table->id();
+            $table->string( 'name', 50 );
+
+            $table->unsignedBigInteger( 'user_id' );
+            $table->foreign( 'user_id' )->references( 'id' )->on( 'users' )->cascadeOnUpdate()->cascadeOnDelete();
+
+            $table->timestamps();
+        } );
+
+
+
+        - customers Table:
+        Schema::create( 'customers', function ( Blueprint $table ) {
+            $table->id();
+            $table->string( 'name', 50 );
+            $table->string( 'email', 50 )->unique();
+            $table->string( 'mobile', 50 );
+
+            $table->unsignedBigInteger( 'user_id' );
+            $table->foreign( 'user_id' )->references( 'id' )->on( 'users' )->cascadeOnUpdate()->cascadeOnDelete();
+
+            $table->timestamps();
+        } );
+
+
+
+        - products Table:
+        Schema::create( 'products', function ( Blueprint $table ) {
+            $table->id();
+            $table->string( 'name', 50 );
+            $table->string( 'price', 50 );
+            $table->string( 'unit', 50 );
+
+            $table->unsignedBigInteger( 'user_id' );
+            $table->unsignedBigInteger( 'category_id' );
+            $table->foreign( 'user_id' )->references( 'id' )->on( 'users' )->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreign( 'category_id' )->references( 'id' )->on( 'categories' )->cascadeOnUpdate()->cascadeOnDelete();
+
+            $table->timestamps();
+        } );
+
+
+
+        - invoices Table:
+        Schema::create( 'invoices', function ( Blueprint $table ) {
+            $table->id();
+            $table->string( 'total', 50 );
+            $table->string( 'discount', 50 );
+            $table->string( 'vat', 50 );
+            $table->string( 'payable', 50 );
+
+            $table->unsignedBigInteger( 'user_id' );
+            $table->unsignedBigInteger( 'customer_id' );
+            $table->foreign( 'user_id' )->references( 'id' )->on( 'users' )->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreign( 'customer_id' )->references( 'id' )->on( 'customers' )->cascadeOnUpdate()->cascadeOnDelete();
+
+            $table->timestamps();
+        } );
+
+
+
+        - invoice_products Table:
+        Schema::create( 'invoice_products', function ( Blueprint $table ) {
+            $table->id();
+            $table->string( 'qty', 50 );
+            $table->string( 'sale_price', 50 );
+
+            $table->unsignedBigInteger( 'user_id' );
+            $table->unsignedBigInteger( 'invoice_id' );
+            $table->unsignedBigInteger( 'product_id' );
+            $table->foreign( 'user_id' )->references( 'id' )->on( 'users' )->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreign( 'invoice_id' )->references( 'id' )->on( 'invoices' )->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreign( 'product_id' )->references( 'id' )->on( 'products' )->cascadeOnUpdate()->cascadeOnDelete();
+
+            $table->timestamps();
+        } );
+
+
+05. Customizing Model files with Relationships establishment between the models
+
+        - Category:
+        protected $fillable = ['name', 'user_id'];
+
+        - Customer:
+        protected $fillable = ['name', 'email', 'mobile', 'user_id'];
+
+        - Invoice:
+        protected $fillable = ['total', 'discount', 'vat', 'payable', 'user_id', 'customer_id'];
+
+        public function customers(): BelongsTo {
+            return $this->belongsTo( Customer::class );
+        }
+
+        - InvoiceProduct:
+        protected $fillable = ['invoice_id', 'product_id', 'quantity', 'price'];
+
+        public function product(): BelongsTo {
+            return $this->belongsTo( Product::class );
+        }
+
+        - Product:
+        protected $fillable = ['name', 'price', 'unit', 'user_id', 'category_id'];
+
+06. Creating 'Helper/JWTToken.php' file in 'app' directory & firebase/php-jwt Token Setup
+        composer require firebase/php-jwt
+
+07. 'JWTToken.php': createToken(), verifyToken(), createTokenForResetPassword() methods setup
+
+        public static function createToken( $userEmail, $userId ) {
+
+            $key = env( 'JWT_KEY' );
+
+            $payload = [
+                'iss'       => 'laravel-token',
+                'iat'       => time(),
+                'exp'       => time() + 60 * 60 * 24 * 30,
+                'userEmail' => $userEmail,
+                'userId'    => $userId,
+            ];
+
+            return JWT::encode( $payload, $key, 'HS256' );
+        }
+
+
+
+        public static function verifyToken( $token ) {
+            try {
+                return $token == null ? 'unauthorized' : JWT::decode( $token, new Key( env( 'JWT_KEY' ), 'HS256' ) );
+            } catch ( Exception $e ) {
+                return 'unauthorized';
+            }
+        }
+
+
+
+        public static function createTokenForResetPassword( $userEmail ) {
+            $key = env( 'JWT_KEY' );
+
+            $payload = [
+                'iss'       => 'laravel-token',
+                'iat'       => time(),
+                'exp'       => time() + 60 * 60 * 24 * 30,
+                'userEmail' => $userEmail,
+                'userId'    => '0',
+            ];
+
+            return JWT::encode( $payload, $key, 'HS256' );
+        }
+
+08. Creating Middleware Files
+
+        One for Monolith & another for API:
+
+        php artisan make:middleware TokenVerificationMiddleware
+        php artisan make:middleware TokenVerificationMiddlewareForAPI
+
+09. TokenVerificationMiddlewareForAPI middleware setup ( as it is API, so there are no sessions or cookies, so for data extract, 'header' will be used, we will collect 'token' from 'header' )
+
+        //? we will collect the token from 'header'
+        $token = $request->header( 'token' );
+
+        //? we will verify the token, if the token is not valid, then it will return 'unauthorized'
+        $result = JWTToken::verifyToken( $token );
+
+
+        //? if not valid then $result == 'unauthorized' ( it is coming from the Helper/JWTToken.php file's 'verifyToken()' method). That means, 'unauthorized' == 'unauthorized', so, the condition will satisfy and it will return 'unauthorized' with status code 401
+        if ( $result == 'unauthorized' ) {
+            return response()->json( ['message' => 'unauthorized'], 401 );
+        }
+
+        //? if the token is valid, then we will set the 'userEmail' and 'userId' to 'header'
+        $request->headers->set( 'userEmail', $result->userEmail );
+        $request->headers->set( 'userId', $result->userId );
+
+        //? then we will let the request to pass
+        return $next( $request );
+
+10. TokenVerificationMiddleware ( as it is not for API, so there are sessions or cookies, so for data extract, we will use 'cookie', that means we will collect 'token' from 'cookie' )
+
+        //? we will collect the token to 'cookie'
+        $token = $request->cookie( 'token' );
+
+        //? we will verify the token, if the token is not valid, then it will return 'unauthorized'
+        $result = JWTToken::verifyToken( $token );
+
+        if ( $result == 'unauthorized' ) {
+            return response()->json( ['message' => 'unauthorized'], 401 );
+        }
+
+        //? if the token is valid, then we will set the 'userEmail' and 'userId' to 'header'
+        $request->headers->set( 'userEmail', $result->userEmail );
+        $request->headers->set( 'userId', $result->userId );
+
+        //? then we will let the request to pass
+        return $next( $request );
+
+11. Creating separate API routing file in 'routes' folder: 'api.php'
+        php artisan install:api
+
+        and also run:
+        php artisan migrate
+
+12. Disabling CSRF protection for testing the responses on Postman, we will enable it later after finishing the project
+        file path: app/bootstrap/app.php
+
+        return Application::configure( basePath: dirname( __DIR__ ) )
+            ->withRouting(
+                web: __DIR__ . '/../routes/web.php',
+                api: __DIR__ . '/../routes/api.php',
+                commands: __DIR__ . '/../routes/console.php',
+                health: '/up',
+            )
+            ->withMiddleware( function ( Middleware $middleware ) {
+                $middleware->validateCsrfTokens( except: [
+                    '*',
+                ] );
+            } )
+            ->withExceptions( function ( Exceptions $exceptions ) {
+                //
+            } )->create();
+
+13. Working with Controllers:
+
+        - UserController:
+
+            class UserController extends Controller {
+
+                public function userRegistration( Request $request ) {
+
+                    try {
+                        $request->validate( [
+                            'name'     => 'required',
+                            'mobile'   => 'required',
+                            'email'    => 'required',
+                            'password' => 'required',
+                        ] );
+
+                        $name     = $request->name;
+                        $mobile   = $request->mobile;
+                        $email    = $request->email;
+                        $password = $request->password;
+
+                        $user = User::create( [
+                            'name'     => $name,
+                            'mobile'   => $mobile,
+                            'email'    => $email,
+                            'password' => Hash::make( $password ),
+                        ] );
+
+                        return response()->json( [
+                            'status'  => 'success',
+                            'message' => 'User registered successfully',
+                            'user'    => $user,
+                        ], 201 );
+
+                    } catch ( Exception $e ) {
+                        return response()->json( [
+                            'status'  => 'failed',
+                            'message' => $e->getMessage(),
+                        ], 500 );
+                    }
+                }
+
+
+
+                public function userLogin( Request $request ) {
+
+                    $request->validate( [
+                        'email'    => 'required|email',
+                        'password' => 'required',
+                    ] );
+
+                    $email    = $request->input( 'email' );
+                    $password = $request->input( 'password' );
+
+                    $user = User::where( 'email', '=', $email )->first();
+
+                    if ( $user && Hash::check( $password, $user->password ) ) {
+                        $token = JWTToken::createToken( $request->input( 'email' ), $user->id );
+
+                        return response()->json( [
+                            'status'  => 'success',
+                            'message' => 'User logged in successfully',
+                            'user'    => $user,
+                            'token'   => $token,
+                        ], 200 )->cookie( 'token', $token, time() + 60 * 24 * 30 );
+                    } else {
+                        return response()->json( [
+                            'status'  => 'failed',
+                            'message' => 'User not found',
+                        ], 404 );
+                    }
+                }
+
+
+
+                public function userLogout( Request $request ) {
+
+                    return redirect( '/' )->cookie( 'token', '', -1 );
+                }
+
+
+
+                public function sendOTP( Request $request ) {
+
+                    $email = $request->input( 'email' );
+                    $otp   = rand( 1000, 9999 );
+                    $user  = User::where( 'email', '=', $email )->first();
+
+                    if ( $user ) {
+                        Mail::to( $email )->send( new OTPMail( $otp ) );
+                        User::where( 'email', '=', $email )->update( ['otp' => $otp] );
+
+                        return response()->json( [
+                            'status'  => 'success',
+                            'message' => "4 digit OTP {$otp} sent to your email address",
+                        ], 200 );
+                    } else {
+                        return response()->json( [
+                            'status'  => 'failed',
+                            'message' => 'User not found',
+                        ], 404 );
+                    }
+                }
+
+
+
+                public function verifyOTP( Request $request ) {
+
+                    $email = $request->input( 'email' );
+                    $otp   = $request->input( 'otp' );
+                    $user  = User::where( 'email', '=', $email )
+                        ->where( 'otp', '=', $otp )
+                        ->first();
+
+                    if ( $user ) {
+                        User::where( 'email', '=', $email )->update( ['otp' => '0'] );
+                        $token = JWTToken::createTokenForResetPassword( $request->input( 'email' ) );
+
+                        return response()->json( [
+                            'status'  => 'success',
+                            'message' => 'OTP verified successfully',
+                            'token'   => $token,
+                        ], 200 )->cookie( 'token', $token, time() + 60 * 24 * 30 );
+                    } else {
+                        return response()->json( [
+                            'status'  => 'failed',
+                            'message' => 'Invalid OTP',
+                        ], 404 );
+                    }
+                }
+
+
+
+                public function resetPassword( Request $request ) {
+
+                }
+
+
+
+                public function userProfileDetails( Request $request ) {
+
+                }
+
+                public function userProfileUpdate( Request $request ) {
+
+                }
+            }
+
+14. Email Configuration
+
+        MAIL_MAILER=smtp
+        MAIL_HOST=mail.teamrabbil.com
+        MAIL_PORT=25
+        MAIL_USERNAME=info@teamrabbil.com
+        MAIL_PASSWORD=~sR4[bhaC[Qs
+        MAIL_ENCRYPTION=null
+        MAIL_FROM_ADDRESS="info@teamrabbil.com"
+        MAIL_FROM_NAME="Sales Inventory Practice API"
+
+        mail generating command:
+        php artisan make:mail OTPMail
+
+
+        -> OTP Mail Template :
+
+        <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+            <div style="margin:50px auto;width:70%;padding:20px 0">
+                <div style="border-bottom:1px solid #eee">
+                    <a href="" style="font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600">Your Brand</a>
+                </div>
+                <p style="font-size:1.1em">Hi,</p>
+                <p>Thank you for choosing Your Brand. Use the following OTP to complete your Sign Up procedures. OTP is valid for 5 minutes</p>
+                <h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">
+                    {{$otp}}
+                </h2>
+                <p style="font-size:0.9em;">Regards,<br />Your Brand</p>
+                <hr style="border:none;border-top:1px solid #eee" />
+                <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
+                    <p>Your Brand Inc</p>
+                    <p>1600 Amphitheatre Parkway</p>
+                    <p>California</p>
+                </div>
+            </div>
+        </div>
+
+
+
+        -> Mail/OTPMail.php configuration:
+
+        class OTPMail extends Mailable {
+
+            use Queueable, SerializesModels;
+
+            public $otp;
+
+            public function __construct() {
+                $this->otp = $otp;
+            }
+
+            public function envelope(): Envelope {
+                return new Envelope(
+                    subject: 'PHP Laravel POS System Mail OTP',
+                );
+            }
+
+            public function content(): Content {
+                return new Content(
+                    view: 'email.OTPMailTemplate',
+                );
+            }
+
+            public function attachments(): array {
+                return [];
+            }
+        }
