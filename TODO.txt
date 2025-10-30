@@ -149,10 +149,10 @@
         - Product:
         protected $fillable = ['name', 'price', 'unit', 'user_id', 'category_id'];
 
-06. Creating 'Helper/JWTToken.php' file in 'app' directory & firebase/php-jwt Token Setup
+06. Creating 'Helper/JwtToken.php' file in 'app' directory & firebase/php-jwt Token Setup
         composer require firebase/php-jwt
 
-07. 'JWTToken.php': createToken(), verifyToken(), createTokenForResetPassword() methods setup
+07. 'JwtToken.php': createToken(), verifyToken(), createTokenForResetPassword() methods setup
 
         public static function createToken( $userEmail, $userId ) {
 
