@@ -2,8 +2,8 @@
         - Users Table -> Already exists, just customize
 
         php artisan make:migration create_categories_table
-        php artisan make:migration create_customers_table
         php artisan make:migration create_products_table
+        php artisan make:migration create_customers_table
         php artisan make:migration create_invoices_table
         php artisan make:migration create_invoice_products_table
 
@@ -17,13 +17,13 @@
         php artisan make:model Product
 
 03. Creating Controller Files
+        php artisan make:controller HomeController
+        php artisan make:controller UserController
+        php artisan make:controller DashboardController
         php artisan make:controller CategoryController
         php artisan make:controller CustomerController
-        php artisan make:controller DashboardController
-        php artisan make:controller HomeController
         php artisan make:controller InvoiceController
         php artisan make:controller ProductController
-        php artisan make:controller UserController
 
 04. Customizing the migration and model files with relationship establishment
 
