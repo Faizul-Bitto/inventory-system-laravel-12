@@ -18,4 +18,17 @@ Route::prefix( 'v1' )->group( function () {
     Route::post( '/reset-password', [UserController::class, 'resetPassword'] )
         ->middleware( [TokenVerificationMiddleware::class] )
         ->name( 'resetPassword' );
+
+    /*
+    |--------------------------------------------------------------------------
+    | 👤 User Profile Routes (v1)
+    |--------------------------------------------------------------------------
+     */
+    Route::get( '/user-profile-details', [UserController::class, 'userProfileDetails'] )
+        ->middleware( [TokenVerificationMiddleware::class] )
+        ->name( 'userProfileDetails' );
+
+    Route::patch( '/update-user-profile', [UserController::class, 'updateUserProfile'] )
+        ->middleware( [TokenVerificationMiddleware::class] )
+        ->name( 'updateUserProfile' );
 } );

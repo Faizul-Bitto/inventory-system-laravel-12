@@ -129,9 +129,10 @@ class UserController extends Controller {
 
     public function resetPassword( Request $request ) {
         try {
-            $email    = $request->header( 'email' );
+            $email    = $request->header( 'userEmail' );
             $password = $request->input( 'password' );
-            $user     = User::where( 'email', '=', $email )->update( ['password' => $password] );
+            $user     = User::where( 'email', '=', $email )
+                ->update( ['password' => $password] );
 
             return response()->json( [
                 'status'  => 'success',
@@ -144,6 +145,21 @@ class UserController extends Controller {
                 'message' => 'Something went wrong',
             ], 500 );
         }
+
+    }
+
+    public function userProfileDetails( Request $request ) {
+        $email = $request->header( 'email' );
+        $user  = User::where( 'email', '=', $email )->first();
+
+        return response()->json( [
+            'status'  => 'success',
+            'message' => 'Request Successful',
+            'user'    => $user,
+        ], 200 );
+    }
+
+    public function updateUserProfile( Request $request ) {
 
     }
 
