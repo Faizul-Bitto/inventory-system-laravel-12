@@ -427,7 +427,7 @@
         MAIL_FROM_NAME="Sales Inventory Practice API"
 
         mail generating command:
-        php artisan make:mail OTPMail
+        php artisan make:mail OtpMail
 
 
         -> OTP Mail Template :
@@ -454,15 +454,15 @@
 
 
 
-        -> Mail/OTPMail.php configuration:
+        -> Mail/OtpMail.php configuration:
 
-        class OTPMail extends Mailable {
+        class OtpMail extends Mailable {
 
             use Queueable, SerializesModels;
 
             public $otp;
 
-            public function __construct() {
+            public function __construct($otp) {
                 $this->otp = $otp;
             }
 
@@ -474,7 +474,7 @@
 
             public function content(): Content {
                 return new Content(
-                    view: 'email.OTPMailTemplate',
+                    view: 'email.OtpMail',
                 );
             }
 
